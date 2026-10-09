@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "L  ",
+    " R ",
+    "  L"
+  ],
+  "key": {
+    "L": "minecraft:lead",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "gamingsetup:cable",
+    "count": 1
+  }
+}

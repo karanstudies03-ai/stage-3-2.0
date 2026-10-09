@@ -68,7 +68,7 @@ public class PcBlock extends HorizontalFacingBlock {
     protected ActionResult onUseWithItem(ItemStack stack, BlockState state, World world, BlockPos pos,
                                          PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (stack.getItem() instanceof CableItem) {
-            if (!world.isClient() && player instanceof ServerPlayerEntity sp) CableItem.clickPc(sp, world, pos);
+            if (!world.isClient() && player instanceof ServerPlayerEntity sp) CableItem.clickPc(sp, world, pos, stack);
             return ActionResult.SUCCESS;
         }
         return ActionResult.PASS_TO_DEFAULT_BLOCK_ACTION;

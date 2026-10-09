@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "GRG",
+    "ICI"
+  ],
+  "key": {
+    "G": [
+      "minecraft:glass",
+      "minecraft:glass_pane"
+    ],
+    "R": "minecraft:redstone",
+    "I": "minecraft:iron_ingot",
+    "C": "gamingsetup:cable"
+  },
+  "result": {
+    "id": "gamingsetup:monitor",
+    "count": 1
+  }
+}

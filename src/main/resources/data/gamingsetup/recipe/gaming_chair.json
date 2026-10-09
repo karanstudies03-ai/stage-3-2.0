@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "W  ",
+    "WW ",
+    "PP "
+  ],
+  "key": {
+    "W": "minecraft:white_wool",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "gamingsetup:gaming_chair",
+    "count": 1
+  }
+}

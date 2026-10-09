@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "BBB",
+    "BBB",
+    "IRI"
+  ],
+  "key": {
+    "B": "minecraft:stone_button",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "gamingsetup:keyboard",
+    "count": 1
+  }
+}

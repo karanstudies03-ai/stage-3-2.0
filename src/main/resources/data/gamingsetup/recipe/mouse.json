@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "B",
+    "R",
+    "I"
+  ],
+  "key": {
+    "B": "minecraft:stone_button",
+    "R": "minecraft:redstone",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "gamingsetup:mouse",
+    "count": 1
+  }
+}

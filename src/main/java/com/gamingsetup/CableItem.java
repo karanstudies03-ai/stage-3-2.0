@@ -1,6 +1,7 @@
 package com.gamingsetup;
 
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Link cable. Right-click a monitor, then right-click a PC (don't sneak).
- * One PC can have any number of monitors; each monitor has one PC.
+ * One cable connects ONE monitor (it is used up). One PC can have many monitors: use one cable each.
  */
 public class CableItem extends Item {
     public static final int MAX_DISTANCE = 16;
@@ -25,7 +26,7 @@ public class CableItem extends Item {
         player.sendMessage(Text.literal("Monitor selected. Now right-click the PC."), true);
     }
 
-    public static void clickPc(ServerPlayerEntity player, World world, BlockPos pcPos) {
+    public static void clickPc(ServerPlayerEntity player, World world, BlockPos pcPos, ItemStack cable) {
         BlockPos monitorPos = PENDING_MONITOR.get(player.getUuid());
         if (monitorPos == null) {
             player.sendMessage(Text.literal("Right-click a monitor with the cable first."), true);
@@ -40,8 +41,19 @@ public class CableItem extends Item {
             player.sendMessage(Text.literal("Cable too short! Max " + MAX_DISTANCE + " blocks."), true);
             return;
         }
+        if (world.getBlockEntity(monitorPos) instanceof MonitorBlockEntity be && pcPos.equals(be.getPcPos())) {
+            PENDING_MONITOR.remove(player.getUuid());
+            player.sendMessage(Text.literal("This monitor is already connected to that PC."), true);
+            return;
+        }
         MonitorBlock.link(world, monitorPos, pcPos);
         PENDING_MONITOR.remove(player.getUuid());
-        player.sendMessage(Text.literal("Monitor connected to PC!"), true);
+        // One cable connects ONE monitor: it is used up (creative mode keeps it for testing)
+        if (!player.isCreative()) {
+            cable.decrement(1);
+            player.sendMessage(Text.literal("Monitor connected to PC! (1 cable used)"), true);
+        } else {
+            player.sendMessage(Text.literal("Monitor connected to PC!"), true);
+        }
     }
 }

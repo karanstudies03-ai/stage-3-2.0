@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GCR",
+    "GBR",
+    "GTR"
+  ],
+  "key": {
+    "G": [
+      "minecraft:glass",
+      "minecraft:glass_pane"
+    ],
+    "C": "gamingsetup:cable",
+    "B": "minecraft:stone_button",
+    "T": "minecraft:redstone_torch",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "gamingsetup:pc",
+    "count": 1
+  }
+}
