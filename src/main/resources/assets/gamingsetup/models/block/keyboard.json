@@ -1,0 +1,73 @@
+{
+  "textures": {
+    "particle": "minecraft:block/gray_concrete",
+    "body": "minecraft:block/gray_concrete",
+    "keys": "minecraft:block/black_concrete"
+  },
+  "elements": [
+    {
+      "from": [
+        2,
+        0,
+        5
+      ],
+      "to": [
+        14,
+        1,
+        11
+      ],
+      "faces": {
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        },
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        1,
+        6
+      ],
+      "to": [
+        13,
+        2,
+        10
+      ],
+      "faces": {
+        "north": {
+          "texture": "#keys"
+        },
+        "south": {
+          "texture": "#keys"
+        },
+        "east": {
+          "texture": "#keys"
+        },
+        "west": {
+          "texture": "#keys"
+        },
+        "up": {
+          "texture": "#keys"
+        },
+        "down": {
+          "texture": "#keys"
+        }
+      }
+    }
+  ]
+}
