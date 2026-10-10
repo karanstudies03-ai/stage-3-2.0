@@ -18,6 +18,11 @@ public class GamingSetupMod implements ModInitializer {
         ModItems.init();
         ModVariants.init();
 
+        PayloadTypeRegistry.playC2S().register(CameraRenamePayload.ID, CameraRenamePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(CameraRenamePayload.ID,
+                (payload, context) -> CameraManager.rename(context.player(), payload.oldName(), payload.newName()));
+        ServerTickEvents.END_SERVER_TICK.register(CameraManager::tick);
+
         PayloadTypeRegistry.playC2S().register(PcActionPayload.ID, PcActionPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(PcActionPayload.ID,
                 (payload, context) -> PcControl.handle(context.server(), context.player(), payload.monitor(), payload.action()));
@@ -46,6 +51,7 @@ public class GamingSetupMod implements ModInitializer {
             entries.add(ModBlocks.KEYBOARD);
             entries.add(ModBlocks.MOUSE);
             entries.add(ModItems.CABLE);
+            entries.add(ModItems.CAMERA);
         });
     }
 }

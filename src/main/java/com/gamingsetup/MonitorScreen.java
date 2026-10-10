@@ -3,7 +3,9 @@ package com.gamingsetup;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
@@ -11,7 +13,7 @@ import java.util.Random;
 
 /** Fullscreen monitor. Esc closes it (default Screen behaviour). */
 public class MonitorScreen extends Screen {
-    private enum Page { DESKTOP, FOOD, TTT, CLICKER }
+    private enum Page { DESKTOP, FOOD, TTT, CLICKER, FILES }
 
     private Page page = Page.DESKTOP;
 
@@ -29,6 +31,8 @@ public class MonitorScreen extends Screen {
     private final Random rng = new Random();
 
     private final net.minecraft.util.math.BlockPos monitorPos;
+    private final FilesApp files = new FilesApp();
+    private boolean hasWallpaper = false;
     private boolean startOpen = false, powerOpen = false;
     private int age = 0;
     private int weatherColor = 0xFFFFC832;
@@ -61,13 +65,30 @@ public class MonitorScreen extends Screen {
     public boolean shouldPause() { return false; }   // world keeps running behind the screen
 
     @Override
-    protected void init() { build(); }
+    protected void init() {
+        hasWallpaper = java.nio.file.Files.exists(CameraStorage.wallpaper());
+        build();
+    }
 
-    private void setPage(Page p) { page = p; rebuild(); }
+    @Override
+    public void removed() {
+        ImageCache.releaseAllExceptWallpaper();
+        super.removed();
+    }
 
-    private void rebuild() { clearChildren(); build(); }
+    void refreshWallpaper() { hasWallpaper = java.nio.file.Files.exists(CameraStorage.wallpaper()); }
 
-    private ButtonWidget btn(String label, int x, int y, int w, int h, Runnable action) {
+    void openFiles() { files.reset(); setPage(Page.FILES); }
+
+    void closeFiles() { setPage(Page.DESKTOP); }
+
+    TextFieldWidget addField(TextFieldWidget w) { addDrawableChild(w); return w; }
+
+    void setPage(Page p) { page = p; rebuild(); }
+
+    void rebuild() { clearChildren(); build(); }
+
+    ButtonWidget btn(String label, int x, int y, int w, int h, Runnable action) {
         ButtonWidget b = ButtonWidget.builder(Text.literal(label), x0 -> action.run()).dimensions(x, y, w, h).build();
         addDrawableChild(b);
         return b;
@@ -80,10 +101,12 @@ public class MonitorScreen extends Screen {
                 btn("Food Order", 30, 50, 110, 20, () -> setPage(Page.FOOD));
                 btn("Tic-Tac-Toe", 30, 80, 110, 20, () -> { resetTtt(); setPage(Page.TTT); });
                 btn("Click Game", 30, 110, 110, 20, () -> { score = 0; cx = -1; setPage(Page.CLICKER); });
+                btn("Files", 30, 140, 110, 20, this::openFiles);
             }
             case FOOD -> buildFood();
             case TTT -> buildTtt();
             case CLICKER -> buildClicker();
+            case FILES -> files.build(this);
         }
         buildTaskbar();
     }
@@ -203,7 +226,15 @@ public class MonitorScreen extends Screen {
 
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-        ctx.fillGradient(0, 0, width, height, 0xFF0B3D91, 0xFF1E90FF);
+        boolean wallpaperDrawn = false;
+        if (page == Page.DESKTOP && hasWallpaper) {
+            ImageCache.Entry wp = ImageCache.get(CameraStorage.wallpaper());
+            if (wp != null) {
+                ctx.drawTexture(RenderPipelines.GUI_TEXTURED, wp.id(), 0, 0, 0f, 0f, width, height, wp.w(), wp.h(), wp.w(), wp.h());
+                wallpaperDrawn = true;
+            }
+        }
+        if (!wallpaperDrawn) ctx.fillGradient(0, 0, width, height, 0xFF0B3D91, 0xFF1E90FF);
         renderTaskbar(ctx);
 
         switch (page) {
@@ -212,6 +243,7 @@ public class MonitorScreen extends Screen {
                 ctx.drawText(textRenderer, "Press Esc to leave the monitor", 30, height - 50, 0xFFCCDDFF, false);
             }
             case FOOD -> renderFood(ctx);
+            case FILES -> files.render(this, ctx);
             case TTT -> {
                 ctx.drawText(textRenderer, "Tic-Tac-Toe", 10, 10, 0xFFFFFFFF, true);
                 ctx.drawText(textRenderer, tttStatus, width / 2 - textRenderer.getWidth(tttStatus) / 2, 40, 0xFFFFFF55, false);
@@ -238,6 +270,7 @@ public class MonitorScreen extends Screen {
             btn("Food Order", px + 10, py + 26, 68, 20, () -> { closeMenus(); setPage(Page.FOOD); });
             btn("Tic-Tac-Toe", px + 86, py + 26, 68, 20, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
             btn("Click Game", px + 162, py + 26, 68, 20, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
+            btn("Files", px + 10, py + 50, 68, 20, () -> { closeMenus(); openFiles(); });
             btn("Power", px + 10, py + MENU_H - 28, 60, 20, () -> { powerOpen = !powerOpen; rebuild(); });
             if (powerOpen) {
                 btn("Sleep", px + 10, py + MENU_H - 28 - 66, 60, 20, () -> pcAction(PcControl.ACTION_SLEEP));

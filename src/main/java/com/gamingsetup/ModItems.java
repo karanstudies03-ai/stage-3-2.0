@@ -9,6 +9,12 @@ import net.minecraft.util.Identifier;
 
 public class ModItems {
     public static final Item CABLE = register("cable");
+    public static final Item CAMERA = registerCamera();
+
+    private static Item registerCamera() {
+        RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(GamingSetupMod.MOD_ID, "camera"));
+        return Registry.register(Registries.ITEM, key, new CameraItem(new Item.Settings().registryKey(key).maxCount(1)));
+    }
 
     private static Item register(String name) {
         RegistryKey<Item> key = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(GamingSetupMod.MOD_ID, name));

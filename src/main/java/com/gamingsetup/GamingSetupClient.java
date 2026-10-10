@@ -13,6 +13,7 @@ public class GamingSetupClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ClientTickEvents.END_CLIENT_TICK.register(PhotoTaker::tick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ClientPlayerEntity p = client.player;
             if (p == null) { wasSeated = false; return; }
