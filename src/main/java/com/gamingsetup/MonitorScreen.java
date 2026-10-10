@@ -28,7 +28,28 @@ public class MonitorScreen extends Screen {
     private int score = 0, best = 0, cx = -1, cy = -1;
     private final Random rng = new Random();
 
-    public MonitorScreen() { super(Text.literal("Monitor")); }
+    private final net.minecraft.util.math.BlockPos monitorPos;
+
+    public MonitorScreen(net.minecraft.util.math.BlockPos monitorPos) {
+        super(Text.literal("Monitor"));
+        this.monitorPos = monitorPos;
+    }
+
+    /** "Shut down": the PC turns off by itself (no need to right-click it). */
+    private void shutDown() {
+        ClientPlayNetworking.send(new ShutdownPayload(monitorPos));
+        close();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        // if the PC is switched off some other way, leave the monitor too
+        if (client != null && client.world != null) {
+            net.minecraft.block.BlockState st = client.world.getBlockState(monitorPos);
+            if (!(st.getBlock() instanceof MonitorBlock) || st.get(MonitorBlock.SCREEN) != MonitorBlock.Screen.ON) close();
+        }
+    }
 
     @Override
     public boolean shouldPause() { return false; }   // world keeps running behind the screen
@@ -53,7 +74,7 @@ public class MonitorScreen extends Screen {
                 btn("Food Order", 30, 50, 110, 20, () -> setPage(Page.FOOD));
                 btn("Tic-Tac-Toe", 30, 80, 110, 20, () -> { resetTtt(); setPage(Page.TTT); });
                 btn("Click Game", 30, 110, 110, 20, () -> { score = 0; cx = -1; setPage(Page.CLICKER); });
-                btn("Shut down", width - 90, height - 22, 86, 20, this::close);
+                btn("Shut down", width - 90, height - 22, 86, 20, this::shutDown);
             }
             case FOOD -> buildFood();
             case TTT -> buildTtt();

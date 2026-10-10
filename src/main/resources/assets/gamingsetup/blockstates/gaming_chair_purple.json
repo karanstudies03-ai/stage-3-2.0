@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "gamingsetup:block/gaming_chair_purple"
+    },
+    "facing=east": {
+      "model": "gamingsetup:block/gaming_chair_purple",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "gamingsetup:block/gaming_chair_purple",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gamingsetup:block/gaming_chair_purple",
+      "y": 270
+    }
+  }
+}

@@ -6,10 +6,10 @@
     "P P"
   ],
   "key": {
-    "P": "minecraft:dark_oak_planks"
+    "P": "minecraft:mangrove_planks"
   },
   "result": {
-    "id": "gamingsetup:desk",
+    "id": "gamingsetup:desk_mangrove",
     "count": 1
   }
 }

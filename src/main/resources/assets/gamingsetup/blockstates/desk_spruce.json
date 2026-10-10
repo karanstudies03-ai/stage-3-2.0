@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "gamingsetup:block/desk_spruce"
+    },
+    "facing=east": {
+      "model": "gamingsetup:block/desk_spruce",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "gamingsetup:block/desk_spruce",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gamingsetup:block/desk_spruce",
+      "y": 270
+    }
+  }
+}

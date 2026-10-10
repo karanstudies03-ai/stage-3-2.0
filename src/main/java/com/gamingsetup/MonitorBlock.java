@@ -120,7 +120,7 @@ public class MonitorBlock extends BlockWithEntity {
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient()) {
-            if (state.get(SCREEN) == Screen.ON) ClientHooks.openMonitor();   // fullscreen, Esc closes
+            if (state.get(SCREEN) == Screen.ON) ClientHooks.openMonitor(pos);   // fullscreen, Esc closes
             return ActionResult.SUCCESS;
         }
         switch (state.get(SCREEN)) {

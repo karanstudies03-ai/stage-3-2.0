@@ -26,7 +26,7 @@ public class ModBlocks {
             AbstractBlock.Settings.create().strength(2.0f).nonOpaque());
 
     public static final Block GAMING_CHAIR = register("gaming_chair",
-            s -> new DecorBlock(s, Block.createCuboidShape(2, 0, 2, 14, 16, 14)),
+            s -> new ChairBlock(s),
             AbstractBlock.Settings.create().strength(1.5f).nonOpaque());
 
     public static final Block DESK = register("desk",

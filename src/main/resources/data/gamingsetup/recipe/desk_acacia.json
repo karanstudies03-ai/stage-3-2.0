@@ -6,10 +6,10 @@
     "P P"
   ],
   "key": {
-    "P": "minecraft:dark_oak_planks"
+    "P": "minecraft:acacia_planks"
   },
   "result": {
-    "id": "gamingsetup:desk",
+    "id": "gamingsetup:desk_acacia",
     "count": 1
   }
 }

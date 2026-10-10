@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "gamingsetup:block/desk_bamboo"
+    },
+    "facing=east": {
+      "model": "gamingsetup:block/desk_bamboo",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "gamingsetup:block/desk_bamboo",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "gamingsetup:block/desk_bamboo",
+      "y": 270
+    }
+  }
+}

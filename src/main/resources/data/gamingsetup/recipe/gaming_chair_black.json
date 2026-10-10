@@ -7,11 +7,11 @@
     "PP "
   ],
   "key": {
-    "W": "minecraft:red_wool",
+    "W": "minecraft:black_wool",
     "P": "#minecraft:planks"
   },
   "result": {
-    "id": "gamingsetup:gaming_chair",
+    "id": "gamingsetup:gaming_chair_black",
     "count": 1
   }
 }

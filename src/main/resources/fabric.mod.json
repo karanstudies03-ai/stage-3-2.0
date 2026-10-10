@@ -6,7 +6,10 @@
   "description": "Build a gaming setup: PC, monitors, desk, chair, keyboard, mouse.",
   "authors": [],
   "environment": "*",
-  "entrypoints": { "main": ["com.gamingsetup.GamingSetupMod"] },
+  "entrypoints": {
+    "main": ["com.gamingsetup.GamingSetupMod"],
+    "client": ["com.gamingsetup.GamingSetupClient"]
+  },
   "depends": {
     "fabricloader": ">=0.16.0",
     "minecraft": "~1.21.11",

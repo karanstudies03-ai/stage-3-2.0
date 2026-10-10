@@ -16,6 +16,13 @@ public class GamingSetupMod implements ModInitializer {
         ModBlocks.init();
         ModBlockEntities.init();
         ModItems.init();
+        ModVariants.init();
+
+        PayloadTypeRegistry.playC2S().register(ShutdownPayload.ID, ShutdownPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(ShutdownPayload.ID,
+                (payload, context) -> PcControl.shutDown(context.server(), context.player(), payload.monitor()));
+        ServerTickEvents.END_SERVER_TICK.register(SeatManager::tick);
+        ServerLifecycleEvents.SERVER_STARTED.register(SeatManager::cleanup);
 
         PayloadTypeRegistry.playC2S().register(OrderPayload.ID, OrderPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(OrderPayload.ID,
@@ -28,7 +35,9 @@ public class GamingSetupMod implements ModInitializer {
             entries.add(ModBlocks.PC);
             entries.add(ModBlocks.MONITOR);
             entries.add(ModBlocks.GAMING_CHAIR);
+            ModVariants.CHAIRS.forEach(entries::add);
             entries.add(ModBlocks.DESK);
+            ModVariants.DESKS.forEach(entries::add);
             entries.add(ModBlocks.KEYBOARD);
             entries.add(ModBlocks.MOUSE);
             entries.add(ModItems.CABLE);
