@@ -29,6 +29,9 @@ public class MonitorScreen extends Screen {
     private final Random rng = new Random();
 
     private final net.minecraft.util.math.BlockPos monitorPos;
+    private boolean startOpen = false, powerOpen = false;
+    private int age = 0;
+    private int weatherColor = 0xFFFFC832;
 
     public MonitorScreen(net.minecraft.util.math.BlockPos monitorPos) {
         super(Text.literal("Monitor"));
@@ -36,8 +39,10 @@ public class MonitorScreen extends Screen {
     }
 
     /** "Shut down": the PC turns off by itself (no need to right-click it). */
-    private void shutDown() {
-        ClientPlayNetworking.send(new ShutdownPayload(monitorPos));
+    private void shutDown() { pcAction(PcControl.ACTION_SHUTDOWN); }
+
+    private void pcAction(int action) {
+        ClientPlayNetworking.send(new PcActionPayload(monitorPos, action));
         close();
     }
 
@@ -45,7 +50,8 @@ public class MonitorScreen extends Screen {
     public void tick() {
         super.tick();
         // if the PC is switched off some other way, leave the monitor too
-        if (client != null && client.world != null) {
+        age++;
+        if (age > 20 && client != null && client.world != null) {
             net.minecraft.block.BlockState st = client.world.getBlockState(monitorPos);
             if (!(st.getBlock() instanceof MonitorBlock) || st.get(MonitorBlock.SCREEN) != MonitorBlock.Screen.ON) close();
         }
@@ -74,12 +80,12 @@ public class MonitorScreen extends Screen {
                 btn("Food Order", 30, 50, 110, 20, () -> setPage(Page.FOOD));
                 btn("Tic-Tac-Toe", 30, 80, 110, 20, () -> { resetTtt(); setPage(Page.TTT); });
                 btn("Click Game", 30, 110, 110, 20, () -> { score = 0; cx = -1; setPage(Page.CLICKER); });
-                btn("Shut down", width - 90, height - 22, 86, 20, this::shutDown);
             }
             case FOOD -> buildFood();
             case TTT -> buildTtt();
             case CLICKER -> buildClicker();
         }
+        buildTaskbar();
     }
 
     // ------------------------------------------------------------------ food order
@@ -198,8 +204,7 @@ public class MonitorScreen extends Screen {
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         ctx.fillGradient(0, 0, width, height, 0xFF0B3D91, 0xFF1E90FF);
-        ctx.fill(0, height - 24, width, height, 0xFF202028);
-        ctx.drawText(textRenderer, "Minecraft OS", 8, height - 16, 0xFFFFFFFF, false);
+        renderTaskbar(ctx);
 
         switch (page) {
             case DESKTOP -> {
@@ -216,7 +221,97 @@ public class MonitorScreen extends Screen {
                 ctx.drawText(textRenderer, "Score: " + score + "   Best: " + best, 10, 28, 0xFFFFFF55, false);
             }
         }
+        renderMenuBackground(ctx);
         super.render(ctx, mouseX, mouseY, delta);
+        drawStartLogo(ctx);
+    }
+
+    // ------------------------------------------------------------------ taskbar / start menu
+    private static final int MENU_W = 240, MENU_H = 150;
+
+    private void closeMenus() { startOpen = false; powerOpen = false; }
+
+    private void buildTaskbar() {
+        btn("", width / 2 - 12, height - 22, 24, 20, () -> { startOpen = !startOpen; powerOpen = false; rebuild(); });
+        if (startOpen) {
+            int px = width / 2 - MENU_W / 2, py = height - 28 - MENU_H;
+            btn("Food Order", px + 10, py + 26, 68, 20, () -> { closeMenus(); setPage(Page.FOOD); });
+            btn("Tic-Tac-Toe", px + 86, py + 26, 68, 20, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
+            btn("Click Game", px + 162, py + 26, 68, 20, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
+            btn("Power", px + 10, py + MENU_H - 28, 60, 20, () -> { powerOpen = !powerOpen; rebuild(); });
+            if (powerOpen) {
+                btn("Sleep", px + 10, py + MENU_H - 28 - 66, 60, 20, () -> pcAction(PcControl.ACTION_SLEEP));
+                btn("Shut down", px + 10, py + MENU_H - 28 - 44, 60, 20, () -> pcAction(PcControl.ACTION_SHUTDOWN));
+                btn("Restart", px + 10, py + MENU_H - 28 - 22, 60, 20, () -> pcAction(PcControl.ACTION_RESTART));
+            }
+            // invisible full-screen button, added last: a click anywhere else closes the menu
+            ButtonWidget catcher = ButtonWidget.builder(Text.empty(), b -> { closeMenus(); rebuild(); })
+                    .dimensions(0, 0, width, height).build();
+            catcher.setAlpha(0.0f);
+            addDrawableChild(catcher);
+        }
+    }
+
+    private void renderMenuBackground(DrawContext ctx) {
+        if (!startOpen) return;
+        int px = width / 2 - MENU_W / 2, py = height - 28 - MENU_H;
+        ctx.fill(px - 1, py - 1, px + MENU_W + 1, py + MENU_H + 1, 0xFF4A4F5C);
+        ctx.fill(px, py, px + MENU_W, py + MENU_H, 0xF0232730);
+        ctx.drawText(textRenderer, "Pinned", px + 10, py + 10, 0xFFFFFFFF, false);
+        ctx.fill(px, py + MENU_H - 34, px + MENU_W, py + MENU_H, 0xF01B1E26);
+        String user = client != null && client.player != null ? client.player.getName().getString() : "Player";
+        ctx.drawText(textRenderer, user, px + 82, py + MENU_H - 22, 0xFFFFFFFF, false);
+    }
+
+    private void drawStartLogo(DrawContext ctx) {
+        int cx0 = width / 2, cy0 = height - 12;
+        int c = 0xFF4DA3FF;
+        ctx.fill(cx0 - 5, cy0 - 5, cx0 - 1, cy0 - 1, c);
+        ctx.fill(cx0 + 1, cy0 - 5, cx0 + 5, cy0 - 1, c);
+        ctx.fill(cx0 - 5, cy0 + 1, cx0 - 1, cy0 + 5, c);
+        ctx.fill(cx0 + 1, cy0 + 1, cx0 + 5, cy0 + 5, c);
+    }
+
+    private void renderTaskbar(DrawContext ctx) {
+        ctx.fill(0, height - 24, width, height, 0xFF202028);
+        ctx.fill(0, height - 24, width, height - 23, 0xFF3A3A44);
+        if (client == null || client.world == null) return;
+
+        // left: in-game weather + temperature
+        String weather = weatherText();
+        ctx.fill(8, height - 17, 16, height - 9, weatherColor);
+        ctx.drawText(textRenderer, weather, 22, height - 16, 0xFFFFFFFF, false);
+
+        // right: in-game time and day, Wi-Fi signal to the left of the time
+        long tod = client.world.getTimeOfDay();
+        long day = tod / 24000L + 1;
+        int mins = (int) (((tod % 24000L) + 6000L) % 24000L * 60L / 1000L);   // tick 0 = 6:00 AM
+        int h = (mins / 60) % 24, m = mins % 60;
+        int h12 = h % 12 == 0 ? 12 : h % 12;
+        String time = h12 + ":" + (m < 10 ? "0" : "") + m + " " + (h < 12 ? "AM" : "PM");
+        String dayText = "Day " + day;
+        int w = Math.max(textRenderer.getWidth(time), textRenderer.getWidth(dayText));
+        ctx.drawText(textRenderer, time, width - 8 - textRenderer.getWidth(time), height - 20, 0xFFFFFFFF, false);
+        ctx.drawText(textRenderer, dayText, width - 8 - textRenderer.getWidth(dayText), height - 10, 0xFFAAAAAA, false);
+        int wx = width - 8 - w - 26;
+        for (int i = 0; i < 4; i++) {
+            int bh = 3 + i * 3;
+            ctx.fill(wx + i * 5, height - 8 - bh, wx + i * 5 + 3, height - 8, 0xFFFFFFFF);
+        }
+    }
+
+    private String weatherText() {
+        net.minecraft.client.world.ClientWorld world = client.world;
+        float t = world.getBiome(client.player.getBlockPos()).value().getTemperature();
+        int c = (int) Math.round(Math.min(45.0, 12.0 + t * 20.0));
+        boolean rain = world.isRaining(), thunder = world.isThundering();
+        String cond;
+        if (thunder) { cond = "Thunderstorm"; weatherColor = 0xFF9B7BFF; }
+        else if (rain) { cond = t < 0.15f ? "Snow" : "Rain"; weatherColor = t < 0.15f ? 0xFFFFFFFF : 0xFF5A8CFF; }
+        else if (world.getTimeOfDay() % 24000L < 13000L) { cond = "Sunny"; weatherColor = 0xFFFFC832; }
+        else { cond = "Clear"; weatherColor = 0xFFC8D4FF; }
+        if (rain) c -= 4;
+        return c + "\u00B0C  " + cond;
     }
 
     private void renderFood(DrawContext ctx) {

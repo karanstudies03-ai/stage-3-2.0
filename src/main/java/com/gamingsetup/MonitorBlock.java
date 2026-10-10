@@ -36,6 +36,7 @@ public class MonitorBlock extends BlockWithEntity {
     public enum Screen implements StringIdentifiable {
         NO_PC("no_pc"),   // not cabled to a PC  -> "PC not connected"
         OFF("off"),       // cabled, PC is off   -> black screen
+        SLEEP("sleep"),   // PC on but this monitor asleep -> black, right-click wakes it
         ON("on");         // cabled, PC is on    -> desktop (Stage 2 adds right-click fullscreen)
 
         private final String name;
@@ -103,6 +104,8 @@ public class MonitorBlock extends BlockWithEntity {
                 target = Screen.NO_PC;
             }
         }
+        if (target == Screen.ON && be.isSleeping()) target = Screen.SLEEP;
+        else if (target != Screen.ON && target != Screen.SLEEP && be.isSleeping()) be.setSleeping(false);
         if (state.get(SCREEN) != target) world.setBlockState(pos, state.with(SCREEN, target), Block.NOTIFY_ALL);
         if (be.getPcPos() != null) world.scheduleBlockTick(pos, this, 10);
     }
@@ -120,13 +123,15 @@ public class MonitorBlock extends BlockWithEntity {
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient()) {
-            if (state.get(SCREEN) == Screen.ON) ClientHooks.openMonitor(pos);   // fullscreen, Esc closes
+            Screen shown = state.get(SCREEN);
+            if (shown == Screen.ON) ClientHooks.openMonitor(pos, false);         // fullscreen, Esc closes
+            else if (shown == Screen.SLEEP) ClientHooks.openMonitor(pos, true);  // wake up and open
             return ActionResult.SUCCESS;
         }
         switch (state.get(SCREEN)) {
             case NO_PC -> player.sendMessage(Text.literal("PC not connected. Use a Link Cable: monitor first, then PC."), true);
             case OFF -> player.sendMessage(Text.literal("The PC is off. Right-click the PC to start it."), true);
-            case ON -> { }
+            case ON, SLEEP -> { }
         }
         return ActionResult.SUCCESS;
     }

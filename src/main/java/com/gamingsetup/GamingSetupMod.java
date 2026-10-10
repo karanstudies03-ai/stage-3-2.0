@@ -18,6 +18,11 @@ public class GamingSetupMod implements ModInitializer {
         ModItems.init();
         ModVariants.init();
 
+        PayloadTypeRegistry.playC2S().register(PcActionPayload.ID, PcActionPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(PcActionPayload.ID,
+                (payload, context) -> PcControl.handle(context.server(), context.player(), payload.monitor(), payload.action()));
+        ServerTickEvents.END_SERVER_TICK.register(PcControl::tick);
+
         PayloadTypeRegistry.playC2S().register(ShutdownPayload.ID, ShutdownPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ShutdownPayload.ID,
                 (payload, context) -> PcControl.shutDown(context.server(), context.player(), payload.monitor()));
