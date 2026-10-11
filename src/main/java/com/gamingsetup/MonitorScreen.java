@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.util.Identifier;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.item.ItemStack;
@@ -31,6 +32,14 @@ public class MonitorScreen extends Screen {
     private final Random rng = new Random();
 
     private final net.minecraft.util.math.BlockPos monitorPos;
+    private record AppTile(String label, Identifier icon, int cellX, int cellY, int cw, int size,
+                           boolean inMenu, ButtonWidget btn) {}
+    private final java.util.List<AppTile> appTiles = new java.util.ArrayList<>();
+    private static final Identifier ICON_FOOD = Identifier.of("gamingsetup", "textures/gui/app_food.png");
+    private static final Identifier ICON_TTT = Identifier.of("gamingsetup", "textures/gui/app_tictactoe.png");
+    private static final Identifier ICON_CLICK = Identifier.of("gamingsetup", "textures/gui/app_click.png");
+    private static final Identifier ICON_FILES = Identifier.of("gamingsetup", "textures/gui/app_files.png");
+
     private final FilesApp files;
     private final String pcId;
     private boolean hasWallpaper = false;
@@ -98,14 +107,41 @@ public class MonitorScreen extends Screen {
         return b;
     }
 
+    /** An app icon with its name underneath (like the Windows desktop). Click anywhere on it to open. */
+    private void appTile(String label, Identifier icon, int cellX, int cellY, int cw, int size, boolean inMenu, Runnable action) {
+        ButtonWidget b = btn("", cellX, cellY, cw, size + 14, action);
+        b.setAlpha(0.0f);                 // invisible click area, the icon is drawn in drawAppTiles
+        appTiles.add(new AppTile(label, icon, cellX, cellY, cw, size, inMenu, b));
+    }
+
+    private void drawAppTiles(DrawContext ctx, boolean inMenu) {
+        for (AppTile t : appTiles) {
+            if (t.inMenu() != inMenu) continue;
+            if (t.btn().isHovered()) ctx.fill(t.cellX(), t.cellY(), t.cellX() + t.cw(), t.cellY() + t.size() + 14, 0x33FFFFFF);
+            ctx.drawTexture(RenderPipelines.GUI_TEXTURED, t.icon(), t.cellX() + (t.cw() - t.size()) / 2, t.cellY() + 2,
+                    0f, 0f, t.size(), t.size(), 32, 32, 32, 32);
+            String lab = textRenderer.trimToWidth(t.label(), t.cw() + 4);
+            ctx.drawText(textRenderer, lab, t.cellX() + (t.cw() - textRenderer.getWidth(lab)) / 2, t.cellY() + t.size() + 4, 0xFFFFFFFF, true);
+        }
+    }
+
     // ------------------------------------------------------------------ pages
     private void build() {
+        appTiles.clear();
         switch (page) {
             case DESKTOP -> {
-                btn("Food Order", 30, 50, 110, 20, () -> setPage(Page.FOOD));
-                btn("Tic-Tac-Toe", 30, 80, 110, 20, () -> { resetTtt(); setPage(Page.TTT); });
-                btn("Click Game", 30, 110, 110, 20, () -> { score = 0; cx = -1; setPage(Page.CLICKER); });
-                btn("Files", 30, 140, 110, 20, this::openFiles);
+                int perCol = Math.max(1, (height - 24 - 12) / 52);
+                String[] names = {"Files", "Food Order", "Tic-Tac-Toe", "Click Game"};
+                Identifier[] icons = {ICON_FILES, ICON_FOOD, ICON_TTT, ICON_CLICK};
+                Runnable[] acts = {
+                        this::openFiles,
+                        () -> setPage(Page.FOOD),
+                        () -> { resetTtt(); setPage(Page.TTT); },
+                        () -> { score = 0; cx = -1; setPage(Page.CLICKER); }
+                };
+                for (int i = 0; i < names.length; i++) {
+                    appTile(names[i], icons[i], 8 + (i / perCol) * 60, 8 + (i % perCol) * 52, 56, 32, false, acts[i]);
+                }
             }
             case FOOD -> buildFood();
             case TTT -> buildTtt();
@@ -243,8 +279,8 @@ public class MonitorScreen extends Screen {
 
         switch (page) {
             case DESKTOP -> {
-                ctx.drawText(textRenderer, "My Desktop", 30, 30, 0xFFFFFFFF, true);
-                ctx.drawText(textRenderer, "Press Esc to leave the monitor", 30, height - 50, 0xFFCCDDFF, false);
+                drawAppTiles(ctx, false);
+                ctx.drawText(textRenderer, "Press Esc to leave the monitor", 8, height - 36, 0xFFCCDDFF, false);
             }
             case FOOD -> renderFood(ctx);
             case FILES -> files.render(this, ctx);
@@ -272,10 +308,10 @@ public class MonitorScreen extends Screen {
         if (startOpen) {
             int px = width / 2 - MENU_W / 2, py = height - 28 - MENU_H;
             if (!powerOpen) {
-                btn("Food Order", px + 10, py + 26, 68, 20, () -> { closeMenus(); setPage(Page.FOOD); });
-                btn("Tic-Tac-Toe", px + 86, py + 26, 68, 20, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
-                btn("Click Game", px + 162, py + 26, 68, 20, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
-                btn("Files", px + 10, py + 50, 68, 20, () -> { closeMenus(); openFiles(); });
+                appTile("Files", ICON_FILES, px + 4, py + 28, 58, 28, true, () -> { closeMenus(); openFiles(); });
+                appTile("Food Order", ICON_FOOD, px + 62, py + 28, 58, 28, true, () -> { closeMenus(); setPage(Page.FOOD); });
+                appTile("Tic-Tac-Toe", ICON_TTT, px + 120, py + 28, 58, 28, true, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
+                appTile("Click Game", ICON_CLICK, px + 178, py + 28, 58, 28, true, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
             } else {
                 btn("Sleep", px + 10, py + 26, 90, 20, () -> pcAction(PcControl.ACTION_SLEEP));
                 btn("Shut down", px + 10, py + 50, 90, 20, () -> pcAction(PcControl.ACTION_SHUTDOWN));
@@ -299,6 +335,7 @@ public class MonitorScreen extends Screen {
         ctx.fill(px, py + MENU_H - 34, px + MENU_W, py + MENU_H, 0xF01B1E26);
         String user = client != null && client.player != null ? client.player.getName().getString() : "Player";
         ctx.drawText(textRenderer, user, px + 82, py + MENU_H - 22, 0xFFFFFFFF, false);
+        drawAppTiles(ctx, true);
     }
 
     private void drawStartLogo(DrawContext ctx) {
