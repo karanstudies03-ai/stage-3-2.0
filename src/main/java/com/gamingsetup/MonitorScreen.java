@@ -31,15 +31,18 @@ public class MonitorScreen extends Screen {
     private final Random rng = new Random();
 
     private final net.minecraft.util.math.BlockPos monitorPos;
-    private final FilesApp files = new FilesApp();
+    private final FilesApp files;
+    private final String pcId;
     private boolean hasWallpaper = false;
     private boolean startOpen = false, powerOpen = false;
     private int age = 0;
     private int weatherColor = 0xFFFFC832;
 
-    public MonitorScreen(net.minecraft.util.math.BlockPos monitorPos) {
+    public MonitorScreen(net.minecraft.util.math.BlockPos monitorPos, String pcId) {
         super(Text.literal("Monitor"));
         this.monitorPos = monitorPos;
+        this.pcId = pcId;
+        this.files = new FilesApp(pcId);
     }
 
     /** "Shut down": the PC turns off by itself (no need to right-click it). */
@@ -66,7 +69,8 @@ public class MonitorScreen extends Screen {
 
     @Override
     protected void init() {
-        hasWallpaper = java.nio.file.Files.exists(CameraStorage.wallpaper());
+        ImageCache.setPinned(PcStorage.wallpaper(pcId));
+        hasWallpaper = java.nio.file.Files.exists(PcStorage.wallpaper(pcId));
         build();
     }
 
@@ -76,7 +80,7 @@ public class MonitorScreen extends Screen {
         super.removed();
     }
 
-    void refreshWallpaper() { hasWallpaper = java.nio.file.Files.exists(CameraStorage.wallpaper()); }
+    void refreshWallpaper() { hasWallpaper = java.nio.file.Files.exists(PcStorage.wallpaper(pcId)); }
 
     void openFiles() { files.reset(); setPage(Page.FILES); }
 
@@ -228,7 +232,7 @@ public class MonitorScreen extends Screen {
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         boolean wallpaperDrawn = false;
         if (page == Page.DESKTOP && hasWallpaper) {
-            ImageCache.Entry wp = ImageCache.get(CameraStorage.wallpaper());
+            ImageCache.Entry wp = ImageCache.get(PcStorage.wallpaper(pcId));
             if (wp != null) {
                 ctx.drawTexture(RenderPipelines.GUI_TEXTURED, wp.id(), 0, 0, 0f, 0f, width, height, wp.w(), wp.h(), wp.w(), wp.h());
                 wallpaperDrawn = true;
@@ -267,16 +271,17 @@ public class MonitorScreen extends Screen {
         btn("", width / 2 - 12, height - 22, 24, 20, () -> { startOpen = !startOpen; powerOpen = false; rebuild(); });
         if (startOpen) {
             int px = width / 2 - MENU_W / 2, py = height - 28 - MENU_H;
-            btn("Food Order", px + 10, py + 26, 68, 20, () -> { closeMenus(); setPage(Page.FOOD); });
-            btn("Tic-Tac-Toe", px + 86, py + 26, 68, 20, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
-            btn("Click Game", px + 162, py + 26, 68, 20, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
-            btn("Files", px + 10, py + 50, 68, 20, () -> { closeMenus(); openFiles(); });
-            btn("Power", px + 10, py + MENU_H - 28, 60, 20, () -> { powerOpen = !powerOpen; rebuild(); });
-            if (powerOpen) {
-                btn("Sleep", px + 10, py + MENU_H - 28 - 66, 60, 20, () -> pcAction(PcControl.ACTION_SLEEP));
-                btn("Shut down", px + 10, py + MENU_H - 28 - 44, 60, 20, () -> pcAction(PcControl.ACTION_SHUTDOWN));
-                btn("Restart", px + 10, py + MENU_H - 28 - 22, 60, 20, () -> pcAction(PcControl.ACTION_RESTART));
+            if (!powerOpen) {
+                btn("Food Order", px + 10, py + 26, 68, 20, () -> { closeMenus(); setPage(Page.FOOD); });
+                btn("Tic-Tac-Toe", px + 86, py + 26, 68, 20, () -> { closeMenus(); resetTtt(); setPage(Page.TTT); });
+                btn("Click Game", px + 162, py + 26, 68, 20, () -> { closeMenus(); score = 0; cx = -1; setPage(Page.CLICKER); });
+                btn("Files", px + 10, py + 50, 68, 20, () -> { closeMenus(); openFiles(); });
+            } else {
+                btn("Sleep", px + 10, py + 26, 90, 20, () -> pcAction(PcControl.ACTION_SLEEP));
+                btn("Shut down", px + 10, py + 50, 90, 20, () -> pcAction(PcControl.ACTION_SHUTDOWN));
+                btn("Restart", px + 10, py + 74, 90, 20, () -> pcAction(PcControl.ACTION_RESTART));
             }
+            btn(powerOpen ? "Back" : "Power", px + 10, py + MENU_H - 28, 60, 20, () -> { powerOpen = !powerOpen; rebuild(); });
             // invisible full-screen button, added last: a click anywhere else closes the menu
             ButtonWidget catcher = ButtonWidget.builder(Text.empty(), b -> { closeMenus(); rebuild(); })
                     .dimensions(0, 0, width, height).build();
@@ -290,7 +295,7 @@ public class MonitorScreen extends Screen {
         int px = width / 2 - MENU_W / 2, py = height - 28 - MENU_H;
         ctx.fill(px - 1, py - 1, px + MENU_W + 1, py + MENU_H + 1, 0xFF4A4F5C);
         ctx.fill(px, py, px + MENU_W, py + MENU_H, 0xF0232730);
-        ctx.drawText(textRenderer, "Pinned", px + 10, py + 10, 0xFFFFFFFF, false);
+        ctx.drawText(textRenderer, powerOpen ? "Power" : "Pinned", px + 10, py + 10, 0xFFFFFFFF, false);
         ctx.fill(px, py + MENU_H - 34, px + MENU_W, py + MENU_H, 0xF01B1E26);
         String user = client != null && client.player != null ? client.player.getName().getString() : "Player";
         ctx.drawText(textRenderer, user, px + 82, py + MENU_H - 22, 0xFFFFFFFF, false);

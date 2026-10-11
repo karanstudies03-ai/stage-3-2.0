@@ -10,9 +10,12 @@ public class ClientHooks {
         MinecraftClient.getInstance().setScreen(new CameraRenameScreen(cameraName));
     }
 
-    public static void openMonitor(net.minecraft.util.math.BlockPos pos, boolean wake) {
-        if (wake) net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                new PcActionPayload(pos, PcControl.ACTION_WAKE));
-        MinecraftClient.getInstance().setScreen(new MonitorScreen(pos));
+    public static void requestOpen(net.minecraft.util.math.BlockPos pos) {
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                new PcActionPayload(pos, PcControl.ACTION_OPEN));
+    }
+
+    public static void openMonitor(net.minecraft.util.math.BlockPos pos, String pcId) {
+        MinecraftClient.getInstance().setScreen(new MonitorScreen(pos, pcId));
     }
 }

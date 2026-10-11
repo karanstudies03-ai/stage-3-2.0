@@ -1,5 +1,6 @@
 package com.gamingsetup;
 
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
@@ -16,7 +17,7 @@ import java.util.List;
 
 /** Power actions chosen from the monitor's Start menu. */
 public class PcControl {
-    public static final int ACTION_SHUTDOWN = 0, ACTION_SLEEP = 1, ACTION_RESTART = 2, ACTION_WAKE = 3;
+    public static final int ACTION_SHUTDOWN = 0, ACTION_SLEEP = 1, ACTION_RESTART = 2, ACTION_WAKE = 3, ACTION_OPEN = 4;
     private static final int RESTART_TICKS = 60;   // 3 seconds
 
     private static class Restart {
@@ -53,6 +54,15 @@ public class PcControl {
                         w.setBlockState(monitorPos, monitor.with(MonitorBlock.SCREEN, MonitorBlock.Screen.SLEEP));
                     }
                 }
+                case ACTION_OPEN -> {
+                    if (pcOn) {
+                        if (be.isSleeping()) {       // right-click wakes a sleeping monitor
+                            be.setSleeping(false);
+                            w.setBlockState(monitorPos, monitor.with(MonitorBlock.SCREEN, MonitorBlock.Screen.ON));
+                        }
+                        ServerPlayNetworking.send(player, new OpenMonitorPayload(monitorPos, pcId(w, pcPos)));
+                    }
+                }
                 case ACTION_WAKE -> {
                     if (pcOn && be.isSleeping()) {
                         be.setSleeping(false);
@@ -72,6 +82,12 @@ public class PcControl {
             }
             return;
         }
+    }
+
+    /** Unique name of one PC: dimension + position. Monitors cabled to it all get the same id. */
+    private static String pcId(ServerWorld w, BlockPos pc) {
+        String dim = w.getRegistryKey().getValue().toString().replace(':', '_').replace('/', '_');
+        return dim + "_" + pc.getX() + "_" + pc.getY() + "_" + pc.getZ();
     }
 
     private static void turnOff(ServerWorld w, BlockPos pcPos, BlockState pc) {

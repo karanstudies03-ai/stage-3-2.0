@@ -18,6 +18,7 @@ public class GamingSetupMod implements ModInitializer {
         ModItems.init();
         ModVariants.init();
 
+        PayloadTypeRegistry.playS2C().register(OpenMonitorPayload.ID, OpenMonitorPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(CameraRenamePayload.ID, CameraRenamePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(CameraRenamePayload.ID,
                 (payload, context) -> CameraManager.rename(context.player(), payload.oldName(), payload.newName()));

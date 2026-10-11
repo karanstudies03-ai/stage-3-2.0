@@ -124,8 +124,7 @@ public class MonitorBlock extends BlockWithEntity {
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient()) {
             Screen shown = state.get(SCREEN);
-            if (shown == Screen.ON) ClientHooks.openMonitor(pos, false);         // fullscreen, Esc closes
-            else if (shown == Screen.SLEEP) ClientHooks.openMonitor(pos, true);  // wake up and open
+            if (shown == Screen.ON || shown == Screen.SLEEP) ClientHooks.requestOpen(pos);   // server answers with the screen
             return ActionResult.SUCCESS;
         }
         switch (state.get(SCREEN)) {

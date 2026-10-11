@@ -13,6 +13,8 @@ public class GamingSetupClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(OpenMonitorPayload.ID,
+                (payload, context) -> ClientHooks.openMonitor(payload.monitor(), payload.pcId()));
         ClientTickEvents.END_CLIENT_TICK.register(PhotoTaker::tick);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ClientPlayerEntity p = client.player;

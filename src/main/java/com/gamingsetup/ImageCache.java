@@ -17,6 +17,9 @@ public final class ImageCache {
     private static final Map<Path, Entry> CACHE = new LinkedHashMap<>();
     private static final Set<Path> FAILED = new HashSet<>();
     private static int counter = 0;
+    private static Path pinned = null;   // the wallpaper of the PC being used: never evicted
+
+    public static void setPinned(Path p) { pinned = p; }
 
     public static Entry get(Path path) {
         Entry e = CACHE.get(path);
@@ -46,14 +49,14 @@ public final class ImageCache {
     public static void releaseAllExceptWallpaper() {
         FAILED.clear();
         for (Path p : new ArrayList<>(CACHE.keySet())) {
-            if (!p.equals(CameraStorage.wallpaper())) release(p);
+            if (!p.equals(pinned)) release(p);
         }
     }
 
     private static void trim() {
         while (CACHE.size() > 6) {
             Path victim = null;
-            for (Path p : CACHE.keySet()) if (!p.equals(CameraStorage.wallpaper())) { victim = p; break; }
+            for (Path p : CACHE.keySet()) if (!p.equals(pinned)) { victim = p; break; }
             if (victim == null) return;
             release(victim);
         }

@@ -46,6 +46,11 @@ final class FilesApp {
     private final List<Tile> tiles = new ArrayList<>();
     private final List<Side> sides = new ArrayList<>();
     private static Path clipboard;   // copied photo, survives closing the monitor
+    private final String pcId;       // which PC's disk this window shows
+
+    FilesApp(String pcId) { this.pcId = pcId; }
+
+    private Path driveC() { return PcStorage.driveC(pcId); }
 
     void reset() {
         loc = Loc.ROOT; dir = null; camName = ""; scrollRow = 0; sideScroll = 0; status = "";
@@ -119,9 +124,9 @@ final class FilesApp {
         List<Runnable> acts = new ArrayList<>();
         all.add(new Side("This PC", 0, 4, 0, loc == Loc.ROOT));
         acts.add(() -> goRoot(s));
-        all.add(new Side("Windows (C:)", 1, 2, 0, loc == Loc.C && dir != null && dir.equals(CameraStorage.driveC())));
+        all.add(new Side("Windows (C:)", 1, 2, 0, loc == Loc.C && dir != null && dir.equals(driveC())));
         acts.add(() -> goC(s));
-        addFolders(all, acts, CameraStorage.driveC(), 2, s);
+        addFolders(all, acts, driveC(), 2, s);
         List<String> cams = cameraNames();
         if (!cams.isEmpty()) {
             all.add(new Side("External device", 1, 2, 0, loc == Loc.EXT));
@@ -244,7 +249,7 @@ final class FilesApp {
 
     // ================================================================== navigation / actions
     private void goRoot(MonitorScreen s) { loc = Loc.ROOT; dir = null; resetView(); s.rebuild(); }
-    private void goC(MonitorScreen s) { loc = Loc.C; dir = CameraStorage.driveC(); resetView(); s.rebuild(); }
+    private void goC(MonitorScreen s) { loc = Loc.C; dir = driveC(); resetView(); s.rebuild(); }
     private void goExt(MonitorScreen s) { loc = Loc.EXT; dir = null; resetView(); s.rebuild(); }
     private void goCam(MonitorScreen s, String n) { loc = Loc.CAM; camName = n; dir = CameraStorage.cameraDir(n); resetView(); s.rebuild(); }
     private void goFolder(MonitorScreen s, Path d) { loc = Loc.C; dir = d; resetView(); s.rebuild(); }
@@ -254,7 +259,7 @@ final class FilesApp {
         resetView();
         switch (loc) {
             case ROOT -> { s.closeFiles(); return; }
-            case C -> { if (dir.equals(CameraStorage.driveC())) loc = Loc.ROOT; else dir = dir.getParent(); }
+            case C -> { if (dir.equals(driveC())) loc = Loc.ROOT; else dir = dir.getParent(); }
             case CAM -> loc = Loc.EXT;
             case EXT -> loc = Loc.ROOT;
         }
@@ -289,9 +294,9 @@ final class FilesApp {
 
     private void setWallpaper(MonitorScreen s) {
         try {
-            Files.createDirectories(CameraStorage.root());
-            Files.copy(photos.get(viewIndex), CameraStorage.wallpaper(), StandardCopyOption.REPLACE_EXISTING);
-            ImageCache.release(CameraStorage.wallpaper());
+            Files.createDirectories(PcStorage.root(pcId));
+            Files.copy(photos.get(viewIndex), PcStorage.wallpaper(pcId), StandardCopyOption.REPLACE_EXISTING);
+            ImageCache.release(PcStorage.wallpaper(pcId));
             s.refreshWallpaper();
             status = "Wallpaper set!";
         } catch (Exception e) {
@@ -439,8 +444,8 @@ final class FilesApp {
         switch (loc) {
             case C -> {
                 sb.append("  >  Windows (C:)");
-                if (dir != null && !dir.equals(CameraStorage.driveC())) {
-                    for (Path part : CameraStorage.driveC().relativize(dir)) sb.append("  >  ").append(part);
+                if (dir != null && !dir.equals(driveC())) {
+                    for (Path part : driveC().relativize(dir)) sb.append("  >  ").append(part);
                 }
             }
             case EXT -> sb.append("  >  External device");
